@@ -1,0 +1,9 @@
+######################################################################
+# macOS
+# Source: https://github.com/github/gitignore/blob/master/Global/macOS.gitignor
+
+terraform/.terraform/**
+cloudguild/.serverless/**
+cloudguild/node_modules/**
+
+
