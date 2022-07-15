@@ -1,0 +1,67 @@
+service: cloudguild-serverless
+
+frameworkVersion: '^3.16.0'
+configValidationMode: error
+
+provider:
+  name: aws
+  runtime: python3.7
+  timeout: 300
+  region: eu-central-1
+  
+  deploymentBucket:
+    name: serverless-cloudguild-deployment-bucket
+    serverSideEncryption: AES256
+
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - "dynamodb:GetItem"
+            - "dynamodb:putItem"
+            - "dynamodb:Scan"
+          Resource:
+            - "arn:aws:dynamodb:*:*:table/cloudguild"
+
+plugins:
+    - serverless-wsgi
+    - serverless-python-requirements
+
+custom:
+  wsgi:
+    app: cloudguildpython/api.app
+    packRequirements: false
+
+functions:
+  api:
+    handler: wsgi_handler.handler
+    events: 
+      - http:
+          path: cloudguild/{id}/{user}
+          method: post
+          cors: true
+      - http: 
+          path: cloudguild/{id}
+          method: get
+          cors: true
+
+resources:
+  Resources:
+    DynamoDbTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: cloudguild
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 40
+          WriteCapacityUnits: 5
+
+
+  
